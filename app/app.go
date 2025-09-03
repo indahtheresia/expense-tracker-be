@@ -3,8 +3,11 @@ package app
 import (
 	"database/sql"
 	"expense-tracker/constant"
+	"expense-tracker/handler"
 	"expense-tracker/middleware"
 	"expense-tracker/middleware/logger"
+	"expense-tracker/repository"
+	"expense-tracker/usecase"
 	"log"
 	"net/http"
 
@@ -19,6 +22,14 @@ func App(db *sql.DB) {
 	r.Use(middleware.RequestIDMiddleware())
 	r.Use(middleware.LoggerMiddleware())
 	r.Use(middleware.ErrorMiddleware())
+
+	transactionRepo := repository.NewTx(db)
+
+	userRepo := repository.NewUserRepo(db)
+	userUseCase := usecase.NewUserUseCase(userRepo, transactionRepo)
+	userHandler := handler.NewUserHandler(userUseCase)
+
+	r.POST("/users/register", userHandler.Register)
 
 	r.GET("/ping", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{
