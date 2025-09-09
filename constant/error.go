@@ -11,5 +11,6 @@ var (
 	ErrorGetClaimSubject    = fmt.Errorf("failed to get claim subject")
 	ErrorInternalServer     = fmt.Errorf("internal server error")
 	ErrorUserEmailExists    = fmt.Errorf("email already exists. please try another email")
+	ErrorUserEmailNotExists = fmt.Errorf("email not found. please check again")
 	ErrorInsertNewUser      = fmt.Errorf("error inserting new user, please try again later")
 )

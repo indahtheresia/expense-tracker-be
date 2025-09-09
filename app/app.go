@@ -30,6 +30,7 @@ func App(db *sql.DB) {
 	userHandler := handler.NewUserHandler(userUseCase)
 
 	r.POST("/users/register", userHandler.Register)
+	r.POST("/users/login", userHandler.Login)
 
 	r.GET("/ping", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{

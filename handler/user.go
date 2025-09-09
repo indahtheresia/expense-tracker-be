@@ -46,3 +46,30 @@ func (uh UserHandler) Register(ctx *gin.Context) {
 
 	util.ResponseMsg(ctx, true, nil, resMsg, constant.Created)
 }
+
+func (uh UserHandler) Login(ctx *gin.Context) {
+	var user dto.LoginUserReq
+	err := ctx.ShouldBindJSON(&user)
+	if err != nil {
+		ctx.Error(err)
+		return
+	}
+
+	data := entity.LoginReq{
+		Email:    user.Email,
+		Password: user.Password,
+	}
+
+	token, role, err := uh.uuc.LoginUser(ctx, data)
+	if err != nil {
+		ctx.Error(err)
+		return
+	}
+
+	resData := dto.LoginUserRes{
+		Token: *token,
+		Role:  *role,
+	}
+
+	util.ResponseMsg(ctx, true, nil, resData, constant.OK)
+}

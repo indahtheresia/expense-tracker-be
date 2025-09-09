@@ -7,10 +7,15 @@ import (
 	"expense-tracker/entity"
 	"expense-tracker/repository"
 	"expense-tracker/util"
+	"strconv"
+	"time"
+
+	"github.com/golang-jwt/jwt/v5"
 )
 
 type UserUseCaseItf interface {
 	InsertUser(ctx context.Context, user entity.InsertUserReq) (*int, error)
+	LoginUser(ctx context.Context, user entity.LoginReq) (*string, *string, error)
 }
 
 type UserUseCaseStruct struct {
@@ -40,7 +45,14 @@ func (uuc UserUseCaseStruct) InsertUser(ctx context.Context, user entity.InsertU
 	var userId *int
 
 	err = uuc.tx.WithTx(ctx, func(ctx context.Context) error {
-		emailExists := uuc.ur.IsEmailExists(ctx, user.Email)
+		emailExists, err := uuc.ur.IsEmailExists(ctx, user.Email)
+		if err != nil {
+			return dto.CustomError{
+				ErrorStr:    constant.ErrorInternalServer.Error(),
+				InternalErr: err.Error(),
+				Status:      constant.InternalServerError,
+			}
+		}
 		if emailExists {
 			return dto.CustomError{
 				ErrorStr:    constant.ErrorUserEmailExists.Error(),
@@ -66,4 +78,86 @@ func (uuc UserUseCaseStruct) InsertUser(ctx context.Context, user entity.InsertU
 	}
 
 	return userId, nil
+}
+
+func (uuc UserUseCaseStruct) LoginUser(ctx context.Context, user entity.LoginReq) (*string, *string, error) {
+	var token string
+	var role string
+	err := uuc.tx.WithTx(ctx, func(ctx context.Context) error {
+		emailNotExists, err := uuc.ur.IsEmailNotExists(ctx, user.Email)
+		if err != nil {
+			return dto.CustomError{
+				ErrorStr:    constant.ErrorInternalServer.Error(),
+				InternalErr: err.Error(),
+				Status:      constant.InternalServerError,
+			}
+		}
+		if emailNotExists {
+			return dto.CustomError{
+				ErrorStr:    constant.ErrorUserEmailNotExists.Error(),
+				InternalErr: constant.ErrorUserEmailNotExists.Error(),
+				Status:      constant.BadRequest,
+			}
+		}
+
+		hashPassword, err := uuc.ur.SelectHashPasswordByEmail(ctx, user.Email)
+		if err != nil {
+			return dto.CustomError{
+				ErrorStr:    constant.ErrorUserEmailNotExists.Error(),
+				InternalErr: err.Error(),
+				Status:      constant.BadRequest,
+			}
+		}
+		hashPass := []byte(*hashPassword)
+		err = util.CompareHashPassword(hashPass, []byte(user.Password))
+		if err != nil {
+			return dto.CustomError{
+				ErrorStr:    constant.ErrorInternalServer.Error(),
+				InternalErr: err.Error(),
+				Status:      constant.InternalServerError,
+			}
+		}
+
+		userId, err := uuc.ur.SelectIdByEmail(ctx, user.Email)
+		if err != nil {
+			return dto.CustomError{
+				ErrorStr:    constant.ErrorInternalServer.Error(),
+				InternalErr: err.Error(),
+				Status:      constant.InternalServerError,
+			}
+		}
+
+		id := strconv.Itoa(*userId)
+		now := time.Now()
+		registeredClaims := dto.CustomClaims{
+			Role:       constant.UserRole,
+			Permission: []string{"read", "edit"},
+			RegisteredClaims: jwt.RegisteredClaims{
+				Issuer:  "expense_tracker_app",
+				Subject: id,
+				IssuedAt: &jwt.NumericDate{
+					Time: now,
+				},
+				ExpiresAt: &jwt.NumericDate{
+					Time: now.Add(24 * time.Hour),
+				},
+			},
+		}
+
+		jwtToken, err := util.GenerateJWTToken(&registeredClaims)
+		if err != nil {
+			return dto.CustomError{
+				ErrorStr:    constant.ErrorInternalServer.Error(),
+				InternalErr: err.Error(),
+				Status:      constant.InternalServerError,
+			}
+		}
+		token = *jwtToken
+		role = constant.UserRole
+		return nil
+	})
+	if err != nil {
+		return nil, nil, err
+	}
+	return &token, &role, nil
 }
