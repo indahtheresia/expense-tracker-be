@@ -29,8 +29,14 @@ func App(db *sql.DB) {
 	userUseCase := usecase.NewUserUseCase(userRepo, transactionRepo)
 	userHandler := handler.NewUserHandler(userUseCase)
 
+	expenseRepo := repository.NewExpenseRepo(db)
+	expenseUseCase := usecase.NewExpenseUseCase(expenseRepo, transactionRepo)
+	expenseHandler := handler.NewExpenseHandler(expenseUseCase)
+
 	r.POST("/users/register", userHandler.Register)
 	r.POST("/users/login", userHandler.Login)
+
+	r.GET("/categories", expenseHandler.GetCategories)
 
 	r.GET("/ping", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{
