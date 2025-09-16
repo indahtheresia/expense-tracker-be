@@ -36,6 +36,8 @@ func App(db *sql.DB) {
 	r.POST("/users/register", userHandler.Register)
 	r.POST("/users/login", userHandler.Login)
 
+	r.POST("/users/expense", middleware.AuthenticationMiddleware, expenseHandler.InsertExpense)
+
 	r.GET("/categories", expenseHandler.GetCategories)
 
 	r.GET("/ping", func(c *gin.Context) {

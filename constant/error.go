@@ -14,4 +14,6 @@ var (
 	ErrorUserEmailNotExists = fmt.Errorf("email not found. please check again")
 	ErrorInsertNewUser      = fmt.Errorf("error inserting new user, please try again later")
 	ErrorGetCategories      = fmt.Errorf("failed to get categories. please try again")
+	ErrorAddExpense         = fmt.Errorf("failed to add expense. please try again")
+	ErrorParsingDate        = fmt.Errorf("invalid date format, use YYYY-MM-DD")
 )
