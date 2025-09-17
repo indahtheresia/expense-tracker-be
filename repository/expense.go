@@ -3,12 +3,15 @@ package repository
 import (
 	"context"
 	"expense-tracker/entity"
+	"fmt"
+	"reflect"
 	"time"
 )
 
 type ExpenseRepoItf interface {
 	SelectCategories(ctx context.Context) ([]entity.GetCategoriesRes, error)
 	InsertNewExpense(ctx context.Context, expense entity.AddExpense, userId int) (*int, error)
+	UpdateExpense(ctx context.Context, expense entity.UpdateExpense, expenseId int) error
 }
 
 type ExpenseRepoStruct struct {
@@ -63,4 +66,72 @@ func (er ExpenseRepoStruct) InsertNewExpense(ctx context.Context, expense entity
 		return nil, err
 	}
 	return &expenseId, nil
+}
+
+func (er ExpenseRepoStruct) UpdateExpense(ctx context.Context, expense entity.UpdateExpense, expenseId int) error {
+	var fieldAssignments string
+
+	allowedEdits := map[string]string{
+		"Title":      "title",
+		"Amount":     "amount",
+		"CategoryId": "category_id",
+		"Date":       "date",
+	}
+
+	val := reflect.ValueOf(expense)
+	typ := reflect.TypeOf(expense)
+	first := true
+	for i := 0; i < val.NumField(); i++ {
+		field := val.Field(i)
+		fieldType := typ.Field(i)
+
+		if !field.CanInterface() {
+			continue
+		}
+
+		column, exists := allowedEdits[fieldType.Name]
+		if !exists {
+			continue
+		}
+
+		editVal := field.Interface()
+		switch v := editVal.(type) {
+		case string:
+			if v != "" {
+				if !first {
+					fieldAssignments += ", "
+				}
+				fieldAssignments += fmt.Sprintf("%s = '%s'", column, v)
+				first = false
+			}
+		case int:
+			if v != 0 {
+				if !first {
+					fieldAssignments += ", "
+				}
+				fieldAssignments += fmt.Sprintf("%s = %d", column, v)
+				first = false
+			}
+		case time.Time:
+			if !v.IsZero() {
+				if !first {
+					fieldAssignments += ", "
+				}
+				fieldAssignments += fmt.Sprintf("%s = '%v'", column, v.Format("2006-01-02"))
+				first = false
+			}
+		}
+	}
+
+	fieldAssignments += ", updated_at = NOW()"
+	sql := fmt.Sprintf("UPDATE expenses SET %s WHERE id = %d", fieldAssignments, expenseId)
+
+	db := ChooseDbOrTx(ctx, er.db)
+
+	_, err := db.ExecContext(ctx, sql)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

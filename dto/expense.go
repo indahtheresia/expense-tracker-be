@@ -11,3 +11,10 @@ type AddExpense struct {
 	CategoryId int    `json:"category_id" binding:"required"`
 	Date       string `json:"date"`
 }
+
+type UpdateExpense struct {
+	Title      string `json:"title,omitempty"`
+	Amount     int    `json:"amount,omitempty"`
+	CategoryId int    `json:"category_id,omitempty"`
+	Date       string `json:"date,omitempty"`
+}

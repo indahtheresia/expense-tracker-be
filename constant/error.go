@@ -16,4 +16,5 @@ var (
 	ErrorGetCategories      = fmt.Errorf("failed to get categories. please try again")
 	ErrorAddExpense         = fmt.Errorf("failed to add expense. please try again")
 	ErrorParsingDate        = fmt.Errorf("invalid date format, use YYYY-MM-DD")
+	ErrorUpdateExpense      = fmt.Errorf("failed to edit expense. please try again")
 )

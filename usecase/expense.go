@@ -11,6 +11,7 @@ import (
 type ExpenseUseCaseItf interface {
 	GetCategories(ctx context.Context) ([]entity.GetCategoriesRes, error)
 	InsertExpense(ctx context.Context, expense entity.AddExpense, userId int) (*int, error)
+	UpdateExpense(ctx context.Context, expense entity.UpdateExpense, expenseId int) error
 }
 
 type ExpenseUseCaseStruct struct {
@@ -70,4 +71,25 @@ func (euc ExpenseUseCaseStruct) InsertExpense(ctx context.Context, expense entit
 	}
 
 	return &expenseId, nil
+}
+
+func (euc ExpenseUseCaseStruct) UpdateExpense(ctx context.Context, expense entity.UpdateExpense, expenseId int) error {
+	err := euc.tx.WithTx(ctx, func(ctx context.Context) error {
+		err := euc.er.UpdateExpense(ctx, expense, expenseId)
+		if err != nil {
+			return dto.CustomError{
+				ErrorStr:    constant.ErrorUpdateExpense.Error(),
+				InternalErr: err.Error(),
+				Status:      constant.InternalServerError,
+			}
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

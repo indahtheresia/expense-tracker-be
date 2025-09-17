@@ -13,3 +13,10 @@ type AddExpense struct {
 	CategoryId int
 	Date       time.Time
 }
+
+type UpdateExpense struct {
+	Title      string
+	Amount     int
+	CategoryId int
+	Date       time.Time
+}
