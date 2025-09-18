@@ -125,3 +125,22 @@ func (eh ExpenseHandler) UpdateExpense(ctx *gin.Context) {
 
 	util.ResponseMsg(ctx, true, nil, "Success update expense data", constant.OK)
 }
+
+func (eh ExpenseHandler) DeleteExpense(ctx *gin.Context) {
+	expenseId := ctx.Param("id")
+	id, err := strconv.Atoi(expenseId)
+	if err != nil {
+		ctx.Error(err)
+		return
+	}
+
+	err = eh.euc.DeleteExpense(ctx, id)
+	if err != nil {
+		ctx.Error(err)
+		return
+	}
+
+	respMsg := fmt.Sprintf("Expense with id %d has been successfully deleted", id)
+
+	util.ResponseMsg(ctx, true, nil, respMsg, constant.NoContent)
+}

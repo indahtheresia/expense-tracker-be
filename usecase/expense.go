@@ -12,6 +12,7 @@ type ExpenseUseCaseItf interface {
 	GetCategories(ctx context.Context) ([]entity.GetCategoriesRes, error)
 	InsertExpense(ctx context.Context, expense entity.AddExpense, userId int) (*int, error)
 	UpdateExpense(ctx context.Context, expense entity.UpdateExpense, expenseId int) error
+	DeleteExpense(ctx context.Context, addressId int) error
 }
 
 type ExpenseUseCaseStruct struct {
@@ -91,5 +92,38 @@ func (euc ExpenseUseCaseStruct) UpdateExpense(ctx context.Context, expense entit
 		return err
 	}
 
+	return nil
+}
+
+func (euc ExpenseUseCaseStruct) DeleteExpense(ctx context.Context, addressId int) error {
+	err := euc.tx.WithTx(ctx, func(ctx context.Context) error {
+		notExists, err := euc.er.IsExpenseIdNotExists(ctx, addressId)
+		if notExists {
+			return dto.CustomError{
+				ErrorStr:    constant.ErrorExpenseNotFound.Error(),
+				InternalErr: constant.ErrorExpenseNotFound.Error(),
+				Status:      constant.BadRequest,
+			}
+		}
+		if err != nil {
+			return dto.CustomError{
+				ErrorStr:    constant.ErrorDeleteExpense.Error(),
+				InternalErr: err.Error(),
+				Status:      constant.InternalServerError,
+			}
+		}
+		err = euc.er.DeleteExpense(ctx, addressId)
+		if err != nil {
+			return dto.CustomError{
+				ErrorStr:    constant.ErrorDeleteExpense.Error(),
+				InternalErr: err.Error(),
+				Status:      constant.InternalServerError,
+			}
+		}
+		return nil
+	})
+	if err != nil {
+		return err
+	}
 	return nil
 }

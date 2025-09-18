@@ -17,4 +17,6 @@ var (
 	ErrorAddExpense         = fmt.Errorf("failed to add expense. please try again")
 	ErrorParsingDate        = fmt.Errorf("invalid date format, use YYYY-MM-DD")
 	ErrorUpdateExpense      = fmt.Errorf("failed to edit expense. please try again")
+	ErrorDeleteExpense      = fmt.Errorf("failed to delete expense. please try again")
+	ErrorExpenseNotFound    = fmt.Errorf("invalid expense id. please enter valid expense id")
 )

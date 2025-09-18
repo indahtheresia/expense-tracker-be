@@ -12,6 +12,8 @@ type ExpenseRepoItf interface {
 	SelectCategories(ctx context.Context) ([]entity.GetCategoriesRes, error)
 	InsertNewExpense(ctx context.Context, expense entity.AddExpense, userId int) (*int, error)
 	UpdateExpense(ctx context.Context, expense entity.UpdateExpense, expenseId int) error
+	DeleteExpense(ctx context.Context, addressId int) error
+	IsExpenseIdNotExists(ctx context.Context, addressId int) (bool, error)
 }
 
 type ExpenseRepoStruct struct {
@@ -134,4 +136,30 @@ func (er ExpenseRepoStruct) UpdateExpense(ctx context.Context, expense entity.Up
 	}
 
 	return nil
+}
+
+func (er ExpenseRepoStruct) DeleteExpense(ctx context.Context, addressId int) error {
+	sql := `UPDATE expenses
+					SET deleted_at = $1
+					WHERE id = $2
+	`
+
+	db := ChooseDbOrTx(ctx, er.db)
+	_, err := db.ExecContext(ctx, sql, time.Now(), addressId)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (er ExpenseRepoStruct) IsExpenseIdNotExists(ctx context.Context, addressId int) (bool, error) {
+	var idExists bool
+	sql := `SELECT NOT EXISTS(SELECT 1 FROM expenses WHERE id = $1 AND deleted_at IS NULL)`
+	db := ChooseDbOrTx(ctx, er.db)
+	err := db.QueryRowContext(ctx, sql, addressId).Scan(&idExists)
+	if err != nil {
+		return true, err
+	}
+	return idExists, nil
 }
