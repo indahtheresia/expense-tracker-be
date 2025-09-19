@@ -19,4 +19,5 @@ var (
 	ErrorUpdateExpense      = fmt.Errorf("failed to edit expense. please try again")
 	ErrorDeleteExpense      = fmt.Errorf("failed to delete expense. please try again")
 	ErrorExpenseNotFound    = fmt.Errorf("invalid expense id. please enter valid expense id")
+	ErrorGetExpenses        = fmt.Errorf("failed to get all expenses. please try again")
 )

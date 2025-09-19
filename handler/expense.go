@@ -144,3 +144,27 @@ func (eh ExpenseHandler) DeleteExpense(ctx *gin.Context) {
 
 	util.ResponseMsg(ctx, true, nil, respMsg, constant.NoContent)
 }
+
+func (eh ExpenseHandler) GetExpenses(ctx *gin.Context) {
+	sub, _ := ctx.Get("sub")
+	userId := sub.(entity.SubAuth).Id
+	allExpenses, err := eh.euc.GetExpenses(ctx, userId)
+	if err != nil {
+		ctx.Error(err)
+		return
+	}
+
+	resData := []dto.GetExpenseRes{}
+	for _, val := range allExpenses {
+		resData = append(resData, dto.GetExpenseRes{
+			Id:           val.Id,
+			Title:        val.Title,
+			Amount:       val.Amount,
+			CategoryId:   val.CategoryId,
+			CategoryName: val.CategoryName,
+			Date:         val.Date,
+		})
+	}
+
+	util.ResponseMsg(ctx, true, nil, resData, constant.OK)
+}

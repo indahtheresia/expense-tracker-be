@@ -36,9 +36,10 @@ func App(db *sql.DB) {
 	r.POST("/users/register", userHandler.Register)
 	r.POST("/users/login", userHandler.Login)
 
-	r.POST("/users/expense", middleware.AuthenticationMiddleware, expenseHandler.InsertExpense)
-	r.PATCH("/users/expense/:id", middleware.AuthenticationMiddleware, expenseHandler.UpdateExpense)
-	r.DELETE("/users/expense/:id", middleware.AuthenticationMiddleware, expenseHandler.DeleteExpense)
+	r.POST("/users/expenses", middleware.AuthenticationMiddleware, expenseHandler.InsertExpense)
+	r.PATCH("/users/expenses/:id", middleware.AuthenticationMiddleware, expenseHandler.UpdateExpense)
+	r.DELETE("/users/expenses/:id", middleware.AuthenticationMiddleware, expenseHandler.DeleteExpense)
+	r.GET("/users/expenses", middleware.AuthenticationMiddleware, expenseHandler.GetExpenses)
 
 	r.GET("/categories", expenseHandler.GetCategories)
 

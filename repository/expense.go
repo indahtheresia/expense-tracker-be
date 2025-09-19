@@ -14,6 +14,7 @@ type ExpenseRepoItf interface {
 	UpdateExpense(ctx context.Context, expense entity.UpdateExpense, expenseId int) error
 	DeleteExpense(ctx context.Context, addressId int) error
 	IsExpenseIdNotExists(ctx context.Context, addressId int) (bool, error)
+	SelectExpensesByUserId(ctx context.Context, userId int) ([]entity.GetExpenseRes, error)
 }
 
 type ExpenseRepoStruct struct {
@@ -162,4 +163,41 @@ func (er ExpenseRepoStruct) IsExpenseIdNotExists(ctx context.Context, addressId 
 		return true, err
 	}
 	return idExists, nil
+}
+
+func (er ExpenseRepoStruct) SelectExpensesByUserId(ctx context.Context, userId int) ([]entity.GetExpenseRes, error) {
+	sql := `SELECT e.id, e.title, e.amount, e.category_id, c.name, e.date
+					FROM expenses e
+					INNER JOIN categories c
+					ON e.category_id = c.id
+					WHERE e.user_id = $1
+					AND e.deleted_at IS NULL
+	`
+
+	db := ChooseDbOrTx(ctx, er.db)
+	rows, err := db.QueryContext(ctx, sql, userId)
+
+	if err != nil {
+		return nil, err
+	}
+
+	defer rows.Close()
+
+	var expenses []entity.GetExpenseRes
+	for rows.Next() {
+		var expense entity.GetExpenseRes
+		err := rows.Scan(&expense.Id, &expense.Title, &expense.Amount, &expense.CategoryId, &expense.CategoryName, &expense.Date)
+		if err != nil {
+			return nil, err
+		}
+
+		expenses = append(expenses, expense)
+	}
+
+	err = rows.Err()
+	if err != nil {
+		return nil, err
+	}
+
+	return expenses, nil
 }

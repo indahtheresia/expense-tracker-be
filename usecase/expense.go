@@ -13,6 +13,7 @@ type ExpenseUseCaseItf interface {
 	InsertExpense(ctx context.Context, expense entity.AddExpense, userId int) (*int, error)
 	UpdateExpense(ctx context.Context, expense entity.UpdateExpense, expenseId int) error
 	DeleteExpense(ctx context.Context, addressId int) error
+	GetExpenses(ctx context.Context, userId int) ([]entity.GetExpenseRes, error)
 }
 
 type ExpenseUseCaseStruct struct {
@@ -126,4 +127,26 @@ func (euc ExpenseUseCaseStruct) DeleteExpense(ctx context.Context, addressId int
 		return err
 	}
 	return nil
+}
+
+func (euc ExpenseUseCaseStruct) GetExpenses(ctx context.Context, userId int) ([]entity.GetExpenseRes, error) {
+	var expenses []entity.GetExpenseRes
+	err := euc.tx.WithTx(ctx, func(ctx context.Context) error {
+		allExpenses, err := euc.er.SelectExpensesByUserId(ctx, userId)
+		if err != nil {
+			return dto.CustomError{
+				ErrorStr:    constant.ErrorGetExpenses.Error(),
+				InternalErr: err.Error(),
+				Status:      constant.InternalServerError,
+			}
+		}
+		expenses = allExpenses
+		return nil
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return expenses, nil
 }

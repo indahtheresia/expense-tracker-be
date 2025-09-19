@@ -9,14 +9,23 @@ type GetCategoriesRes struct {
 
 type AddExpense struct {
 	Title      string
-	Amount     int
+	Amount     float64
 	CategoryId int
 	Date       time.Time
 }
 
 type UpdateExpense struct {
 	Title      string
-	Amount     int
+	Amount     float64
 	CategoryId int
 	Date       time.Time
+}
+
+type GetExpenseRes struct {
+	Id           int
+	Title        string
+	Amount       float64
+	CategoryId   int
+	CategoryName string
+	Date         time.Time
 }
